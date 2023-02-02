@@ -1,0 +1,77 @@
+version: '2.1'
+services:
+  config-server:
+    image: al1usman/config-server:0.1
+    ports:
+      - "7000:7000"
+    networks:
+      backend:
+        aliases:
+          - "config-server"
+  eureka-server:
+    image: al1usman/eureka-server-image:0.4
+    environment:
+      PROFILE: "default"
+      CONFIGSERVER_URI: "http://config-server:7000"
+      CONFIGSERVER_PORT: "7000"
+    depends_on:
+      config-server:
+        condition: service_started
+    ports:
+      - "8761:8761"
+    networks:
+      backend:
+        aliases:
+          - "eureka-server"
+  test-service-1:
+    image: al1usman/student-service-1-image-fresh:0.5
+    environment:
+      PROFILE: "default"
+      CONFIGSERVER_URI: "http://config-server:7000"
+      CONFIGSERVER_PORT: "7000"
+      DATABASESERVER_PORT: "3306"
+    depends_on:
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+  test-service-2:
+    image: al1usman/institute-service-2-image-fresh:0.4
+    environment:
+      PROFILE: "default"
+      CONFIGSERVER_URI: "http://config-server:7000"
+      CONFIGSERVER_PORT: "7000"
+      DATABASESERVER_PORT: "3306"
+    depends_on:
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    ports:
+      - "8081:8081"
+    networks:
+      - backend
+  gateway-server:
+    image: al1usman/gateway-server:0.1
+    environment:
+      PROFILE: "default"
+      CONFIGSERVER_URI: "http://config-server:7000"
+      CONFIGSERVER_PORT: "7000"
+      DATABASESERVER_PORT: "3306"
+    depends_on:
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    ports:
+      - "9000:9000"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
